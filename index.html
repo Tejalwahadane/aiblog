@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(rgb(4, 27, 105), rgb(118, 10, 180),rgb(148, 5, 117));
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+        text-align: center;
+        color: #333;
+    }
+
+    #noteForm {
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    input[type="text"],
+    textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 6px 0 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    #saveBtn {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .note {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+        white-space: pre-wrap; /* Preserve spaces and wrap lines */
+        position: relative;
+    }
+
+    .note h3 {
+        margin: 0 0 5px;
+        color: #333;
+    }
+
+    .note p {
+        margin: 0;
+        color: #666;
+    }
+
+    .timestamp {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .deleteBtn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: #ff0000;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Dashboard</h1>
+    
+    <!-- Form to save a note -->
+    <form id="noteForm">
+        <label for="note_name">Note Name:</label>
+        <input type="text" id="note_name" name="note_name">
+        <br>
+        <label for="note_content">Note Content:</label>
+        <textarea id="note_content" name="note_content"></textarea>
+        <br>
+        <button id="saveBtn" type="submit">Save Note</button>
+        <button id="exportBtn">Export Note as JSON</button>
+    </form>
+
+    <h2>Saved Notes</h2>
+    <div id="notesList"></div>
+</div>
+
+<script>
+    // Function to save a note
+    function saveNote() {
+        var noteName = document.getElementById('note_name').value.trim();
+        var noteContent = document.getElementById('note_content').value.trim();
+        var timestamp = new Date().toLocaleString(); // Get current date and time
+
+        if (noteName && noteContent) {
+            var note = {
+                name: noteName,
+                content: noteContent,
+                timestamp: timestamp
+            };
+
+            // Get existing notes from localStorage or initialize an empty array
+            var notes = JSON.parse(localStorage.getItem('notes')) || [];
+            notes.push(note);
+
+            // Save notes to localStorage
+            localStorage.setItem('notes', JSON.stringify(notes));
+
+            // Refresh notes list
+            displayNotes();
+            
+            // Display alert
+            alert('Note saved successfully!');
+        } else {
+            alert('Please enter both note name and content.');
+        }
+
+        // Prevent form submission
+        event.preventDefault();
+    }
+
+    // Function to delete a note
+    function deleteNote(index) {
+        var notes = JSON.parse(localStorage.getItem('notes')) || [];
+        notes.splice(index, 1);
+        localStorage.setItem('notes', JSON.stringify(notes));
+        displayNotes();
+    }
+
+    // Function to display saved notes
+    function displayNotes() {
+        var notesList = document.getElementById('notesList');
+        notesList.innerHTML = '';
+
+        // Get saved notes from localStorage
+        var notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+        // Display each note in the list
+        notes.forEach(function(note, index) {
+            var noteDiv = document.createElement('div');
+            noteDiv.classList.add('note');
+
+            var h3 = document.createElement('h3');
+            h3.textContent = note.name;
+            noteDiv.appendChild(h3);
+
+            var p = document.createElement('p');
+            p.textContent = note.content;
+            noteDiv.appendChild(p);
+
+            var timestamp = document.createElement('div');
+            timestamp.classList.add('timestamp');
+            timestamp.textContent = 'Created: ' + note.timestamp;
+            noteDiv.appendChild(timestamp);
+
+            var deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'X';
+            deleteBtn.classList.add('deleteBtn');
+            deleteBtn.addEventListener('click', function() {
+                deleteNote(index);
+            });
+            noteDiv.appendChild(deleteBtn);
+
+            notesList.appendChild(noteDiv);
+        });
+    }
+
+    // Display saved notes on page load
+    displayNotes();
+
+    // Event listener for form submission
+    document.getElementById('noteForm').addEventListener('submit', saveNote);
+
+    // Event listener for exporting note as a JSON file
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        var noteContent = document.getElementById('note_content').value.trim();
+        if (noteContent) {
+            var jsonData = {
+                content: noteContent
+            };
+            var jsonDataStr = JSON.stringify(jsonData, null, 2);
+            var blob = new Blob([jsonDataStr], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+
+            // Create a temporary link element and click it programmatically
+            var link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'note.json');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            alert('Note content is empty.');
+        }
+    });
+</script>
+</body>
+</html>
